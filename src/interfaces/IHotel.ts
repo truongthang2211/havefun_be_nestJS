@@ -3,7 +3,7 @@ import IPromotion from './IPromotions';
 import IRoom from './IRoom';
 
 export interface IHotel {
-  hotel_doc_id: string;
+  hotel_id: string;
   name: string;
   description: string;
   created_at: Timestamp;

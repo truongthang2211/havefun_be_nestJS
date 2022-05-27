@@ -1,5 +1,5 @@
 import { Get, Injectable } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import db from 'src/db/db';
 import {
   doc,
@@ -11,6 +11,8 @@ import {
   updateDoc,
   arrayUnion,
   getDoc,
+  arrayRemove,
+  deleteDoc,
 } from 'firebase/firestore';
 import { IHotel } from 'src/interfaces/IHotel';
 import IRoom from 'src/interfaces/IRoom';
@@ -33,6 +35,7 @@ export class HotelsService {
       return TempArray;
     }
   }
+
   async GetHotels() {
     try {
       const hotels = collection(db, 'hotels');
@@ -49,7 +52,7 @@ export class HotelsService {
             'user',
           );
 
-          return { id: doc.id, ...originData };
+          return { ...originData, id: doc.id };
         }),
       );
       return { status: 200, data: listHotel };
@@ -84,39 +87,128 @@ export class HotelsService {
       return { status: 500, error };
     }
   }
-  async CreateHotel(motel: IHotel) {
+  async EditHotel(motel: IHotel, imgs: Array<Express.Multer.File>) {
+    try {
+      const HotelEdit = {
+        ...motel,
+        imgs: [],
+      };
+      if (!HotelEdit.hotel_id)
+        return { status: 201, desc: 'hotel_id is required' };
+
+      const hotelRef = doc(db, 'hotels', HotelEdit.hotel_id);
+      if (!(await getDoc(hotelRef)).exists())
+        return { status: 201, desc: 'Hotel not found' };
+      const storage = getStorage();
+      const metadata = {
+        contentType: 'image/jpeg',
+      };
+      for (let i = 0; i < imgs.length; ++i) {
+        const storageRef = ref(
+          storage,
+          `images/hotels/${Timestamp.now().toMillis()}`,
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          imgs[i].buffer,
+          metadata,
+        );
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        HotelEdit.imgs.push(downloadURL);
+      }
+      setDoc(hotelRef, HotelEdit);
+      return { status: 200, data: { ...HotelEdit } };
+    } catch (error) {
+      console.log(error);
+      return { status: 500, error };
+    }
+  }
+  async CreateHotel(motel: IHotel, imgs: Array<Express.Multer.File>) {
     try {
       const HotelCreate = {
         ...motel,
         created_at: Timestamp.now(),
         rooms: [],
+        imgs: [],
       };
+      const storage = getStorage();
+      const metadata = {
+        contentType: 'image/jpeg',
+      };
+      for (let i = 0; i < imgs.length; ++i) {
+        const storageRef = ref(
+          storage,
+          `images/hotels/${Timestamp.now().toMillis()}`,
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          imgs[i].buffer,
+          metadata,
+        );
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        HotelCreate.imgs.push(downloadURL);
+      }
+
       const docRef = await addDoc(collection(db, 'hotels'), HotelCreate);
       return { status: 200, data: { ...HotelCreate, hotel_id: docRef.id } };
     } catch (error) {
       return { status: 500, error };
     }
   }
-  async AddRoom(Room: IRoom, HotelDocId: string) {
+  async AddRoom(
+    Room: IRoom,
+    HotelDocId: string,
+    imgs: Array<Express.Multer.File>,
+  ) {
     try {
+      const storage = getStorage();
+      const metadata = {
+        contentType: 'image/jpeg',
+      };
       const HotelRef = doc(db, 'hotels', HotelDocId);
+      if (!(await getDoc(HotelRef)).exists())
+        return { status: 201, desc: 'Hotel not found' };
+      for (let i = 0; i < imgs.length; ++i) {
+        const storageRef = ref(
+          storage,
+          `images/rooms/${Timestamp.now().toMillis()}`,
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          imgs[i].buffer,
+          metadata,
+        );
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        Room.imgs.push(downloadURL);
+      }
+
       const RoomRefAdd = await addDoc(collection(db, 'rooms'), Room);
       const RoomAdded = doc(db, 'rooms', RoomRefAdd.id);
       await updateDoc(HotelRef, {
         rooms: arrayUnion(RoomAdded),
       });
+
       return { status: 200, data: RoomRefAdd.id };
     } catch (error) {
+      console.log(error);
       return { status: 500, error };
     }
   }
-  async DeleteRoom(RoomUuid: string, HotelDocId: string) {
+  async DeleteRoom(RoomID: string, HotelID: string) {
     try {
-      const HotelRef = doc(db, 'hotels', HotelDocId);
-      const DocSnap = await getDoc(HotelRef);
-      if (DocSnap.exists()) {
-        const rooms = DocSnap.data();
+      const HotelRef = doc(db, 'hotels', HotelID);
+      const RoomRef = doc(db, 'rooms', RoomID);
+      if (
+        !(await getDoc(HotelRef)).exists() ||
+        !(await getDoc(RoomRef)).exists()
+      ) {
+        return { status: 201, desc: 'Room or Hotel not found' };
       }
+      await updateDoc(HotelRef, {
+        rooms: arrayRemove(RoomRef),
+      });
+      await deleteDoc(RoomRef);
+      return { status: 200, desc: 'Successful' };
     } catch (error) {
       return { status: 500, error };
     }
