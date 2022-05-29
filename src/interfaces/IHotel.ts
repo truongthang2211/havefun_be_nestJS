@@ -1,9 +1,12 @@
-import { Timestamp } from 'firebase/firestore';
+import { DocumentReference, Timestamp } from 'firebase/firestore';
+import Promotion from 'src/dto/Promotion';
+import Rating from 'src/dto/Rating';
+import Room from 'src/dto/Room';
 import IPromotion from './IPromotions';
 import IRoom from './IRoom';
 
 export interface IHotel {
-  hotel_id: string;
+  id: string;
   name: string;
   description: string;
   created_at: Timestamp;
@@ -13,7 +16,8 @@ export interface IHotel {
     city: string;
     district: string;
   };
-  rooms: IRoom[];
+  rooms: Room[];
+  promotions: Promotion[];
+  ratings: Rating[];
   imgs: string[];
-  promotions: IPromotion[];
 }

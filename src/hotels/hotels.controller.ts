@@ -58,4 +58,13 @@ export class HotelsController {
     const JSdata = JSON.parse(Hotel.data);
     return this.hotelService.EditHotel(JSdata, files);
   }
+  @Put('editroom')
+  @UseInterceptors(FilesInterceptor('imgs'))
+  async EditRoom(
+    @Body() Hotel: any,
+    @UploadedFiles() files: Array<Express.Multer.File>,
+  ) {
+    const JSdata = JSON.parse(Hotel.data);
+    return this.hotelService.EditRoom(JSdata.room, JSdata.hotel_id, files);
+  }
 }

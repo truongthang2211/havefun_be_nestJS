@@ -1,5 +1,7 @@
-import { Timestamp } from '@firebase/firestore';
-export default interface IRoom {
+import { Timestamp } from 'firebase/firestore';
+import IRoom from 'src/interfaces/IRoom';
+
+export default class Room implements IRoom {
   id: string;
   overnight_price: number;
   daily_price: number;
@@ -18,11 +20,7 @@ export default interface IRoom {
   hour_price: number;
   created_at: Timestamp;
   room_conditions: [
-    {
-      area_20m2: boolean;
-      double_bed: boolean;
-      window: boolean;
-    },
+    { area_20m2: boolean; double_bed: boolean; window: boolean },
   ];
   name: string;
   room_type: string;

@@ -13,21 +13,25 @@ import {
   getDoc,
   arrayRemove,
   deleteDoc,
+  DocumentData,
+  QuerySnapshot,
+  DocumentReference,
 } from 'firebase/firestore';
 import { IHotel } from 'src/interfaces/IHotel';
 import IRoom from 'src/interfaces/IRoom';
+import Hotel from 'src/dto/Hotel';
 @Injectable()
 export class HotelsService {
-  async GetRefDocInArray(RefArray, SubRef = null) {
+  async GetRefDocInArray(RefArray, SubRef = null): Promise<any[]> {
     if (RefArray) {
       let TempArray = [];
       await Promise.all(
         RefArray.map(async (r) => {
           if (r) {
             const TempRef = await getDoc(SubRef ? r[SubRef] : r);
-            const data: {} = TempRef.data();
+            const data: DocumentData = TempRef.data();
             TempArray.push(
-              !SubRef ? { id: TempRef.id, ...data } : { ...r, [SubRef]: data },
+              !SubRef ? { ...data, id: TempRef.id } : { ...r, [SubRef]: data },
             );
           }
         }),
@@ -39,8 +43,8 @@ export class HotelsService {
   async GetHotels() {
     try {
       const hotels = collection(db, 'hotels');
-      const hotelsSnapshot = await getDocs(hotels);
-      const listHotel = await Promise.all(
+      const hotelsSnapshot = (await getDocs(hotels)) as QuerySnapshot<Hotel>;
+      const listHotel: Array<Hotel> = await Promise.all(
         hotelsSnapshot.docs.map(async (doc) => {
           const originData = doc.data();
           originData.rooms = await this.GetRefDocInArray(originData.rooms);
@@ -63,9 +67,9 @@ export class HotelsService {
   }
   async GetHotelsById(id: string) {
     try {
-      const hotels = doc(db, 'hotels', id);
-      const hotelsSnapshot = await getDoc(hotels);
-      let HotelData = null;
+      const hotels = doc(db, 'hotels', id) as DocumentReference<Hotel>;
+      const hotelsSnapshot = await getDoc<Hotel>(hotels);
+      let HotelData: Hotel = null;
       if (hotelsSnapshot.exists()) {
         HotelData = hotelsSnapshot.data();
         HotelData.rooms = await this.GetRefDocInArray(HotelData.rooms);
@@ -93,10 +97,9 @@ export class HotelsService {
         ...motel,
         imgs: [],
       };
-      if (!HotelEdit.hotel_id)
-        return { status: 201, desc: 'hotel_id is required' };
+      if (!HotelEdit.id) return { status: 201, desc: 'hotel_id is required' };
 
-      const hotelRef = doc(db, 'hotels', HotelEdit.hotel_id);
+      const hotelRef = doc(db, 'hotels', HotelEdit.id);
       if (!(await getDoc(hotelRef)).exists())
         return { status: 201, desc: 'Hotel not found' };
       const storage = getStorage();
@@ -117,7 +120,7 @@ export class HotelsService {
         HotelEdit.imgs.push(downloadURL);
       }
       setDoc(hotelRef, HotelEdit);
-      return { status: 200, data: { ...HotelEdit } };
+      return { status: 200, data: HotelEdit };
     } catch (error) {
       console.log(error);
       return { status: 500, error };
@@ -181,7 +184,7 @@ export class HotelsService {
         const downloadURL = await getDownloadURL(snapshot.ref);
         Room.imgs.push(downloadURL);
       }
-
+      Room.created_at = Timestamp.now();
       const RoomRefAdd = await addDoc(collection(db, 'rooms'), Room);
       const RoomAdded = doc(db, 'rooms', RoomRefAdd.id);
       await updateDoc(HotelRef, {
@@ -189,6 +192,45 @@ export class HotelsService {
       });
 
       return { status: 200, data: RoomRefAdd.id };
+    } catch (error) {
+      console.log(error);
+      return { status: 500, error };
+    }
+  }
+  async EditRoom(
+    Room: IRoom,
+    HotelDocId: string,
+    imgs: Array<Express.Multer.File>,
+  ) {
+    try {
+      const storage = getStorage();
+      const metadata = {
+        contentType: 'image/jpeg',
+      };
+      if (!Room.id) return { status: 201, desc: 'room_id is required' };
+      const HotelRef = doc(db, 'hotels', HotelDocId);
+      const RoomRef = doc(db, 'rooms', Room.id);
+      if (
+        !(await getDoc(HotelRef)).exists() ||
+        !(await getDoc(RoomRef)).exists()
+      )
+        return { status: 201, desc: 'Hotel or room not found' };
+      for (let i = 0; i < imgs.length; ++i) {
+        const storageRef = ref(
+          storage,
+          `images/rooms/${Timestamp.now().toMillis()}`,
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          imgs[i].buffer,
+          metadata,
+        );
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        Room.imgs.push(downloadURL);
+      }
+
+      await setDoc(RoomRef, Room);
+      return { status: 200, data: Room };
     } catch (error) {
       console.log(error);
       return { status: 500, error };

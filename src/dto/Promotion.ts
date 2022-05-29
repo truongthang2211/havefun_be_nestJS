@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
+import IPromotion from 'src/interfaces/IPromotions';
 
-export default interface IPromotion {
+export default class Promotion implements IPromotion {
   name: string;
   description: string;
   img: string;
