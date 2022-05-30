@@ -12,6 +12,7 @@ export default interface IOrder {
   overnight_price: number;
   daily_price: number;
   hour_price_bonus: number;
+  order_status: 'processing' | 'complete' | 'canceled';
   hour_price: number;
   order_start: Timestamp;
   order_end: Timestamp;

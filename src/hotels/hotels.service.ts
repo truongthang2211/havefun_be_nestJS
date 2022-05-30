@@ -97,7 +97,7 @@ export class HotelsService {
         ...motel,
         imgs: [],
       };
-      if (!HotelEdit.id) return { status: 201, desc: 'hotel_id is required' };
+      if (!HotelEdit.id) return { status: 201, desc: 'id is required' };
 
       const hotelRef = doc(db, 'hotels', HotelEdit.id);
       if (!(await getDoc(hotelRef)).exists())
@@ -119,7 +119,7 @@ export class HotelsService {
         const downloadURL = await getDownloadURL(snapshot.ref);
         HotelEdit.imgs.push(downloadURL);
       }
-      setDoc(hotelRef, HotelEdit);
+      updateDoc(hotelRef, HotelEdit);
       return { status: 200, data: HotelEdit };
     } catch (error) {
       console.log(error);
@@ -153,7 +153,7 @@ export class HotelsService {
       }
 
       const docRef = await addDoc(collection(db, 'hotels'), HotelCreate);
-      return { status: 200, data: { ...HotelCreate, hotel_id: docRef.id } };
+      return { status: 200, data: { ...HotelCreate, id: docRef.id } };
     } catch (error) {
       return { status: 500, error };
     }

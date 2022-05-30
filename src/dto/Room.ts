@@ -2,6 +2,7 @@ import { Timestamp } from 'firebase/firestore';
 import IRoom from 'src/interfaces/IRoom';
 
 export default class Room implements IRoom {
+  room_id: string;
   id: string;
   overnight_price: number;
   daily_price: number;

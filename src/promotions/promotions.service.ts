@@ -47,6 +47,30 @@ export class PromotionsService {
       return { status: 500, error };
     }
   }
+  async GetPromotionByHotel(HotelID: string) {
+    try {
+      const hotels = await getDoc(doc(db, 'hotels', HotelID));
+      let promotionList = Array<Promotion>();
+      if (hotels.data().promotions) {
+        await Promise.all(
+          hotels.data().promotions.map(async (d: any) => {
+            const prmotionRef = await getDoc<Promotion>(d);
+            const promotion: Promotion = prmotionRef.data();
+            promotionList.push({
+              hotel_id: d.id,
+              ...promotion,
+              id: prmotionRef.id,
+            });
+          }),
+        );
+      }
+
+      return { status: 200, data: promotionList };
+    } catch (error) {
+      console.log(error);
+      return { status: 500, error };
+    }
+  }
   async CreatePromotion(promotion: IPromotion, img: Express.Multer.File) {
     try {
       const HotelRef = doc(db, 'hotels', promotion.hotel_id);
@@ -59,7 +83,7 @@ export class PromotionsService {
       };
       const storageRef = ref(
         storage,
-        `images/rooms/${Timestamp.now().toMillis()}`,
+        `images/promotions/${Timestamp.now().toMillis()}`,
       );
       const snapshot = await uploadBytes(storageRef, img.buffer, metadata);
       const downloadURL = await getDownloadURL(snapshot.ref);
