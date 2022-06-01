@@ -20,6 +20,8 @@ import { IHotel } from 'src/interfaces/IHotel';
 import IRoom from 'src/interfaces/IRoom';
 import Hotel from 'src/dto/Hotel';
 import Room from 'src/dto/Room';
+import Rating from 'src/dto/Rating';
+import ICreateRating from 'src/interfaces/ICreateRating';
 @Injectable()
 export class HotelsService {
   async GetRefDocInArray(RefArray, SubRef = null): Promise<any[]> {
@@ -243,6 +245,33 @@ export class HotelsService {
       });
       await deleteDoc(RoomRef);
       return { status: 200, desc: 'Successful' };
+    } catch (error) {
+      return { status: 500, error };
+    }
+  }
+  async CreateRating(rating: ICreateRating) {
+    try {
+      const hotelRef = doc(db, 'hotels', rating.hotel_id);
+      const userRef = doc(db, 'users', rating.user_id);
+      const userDoc = await getDoc(userRef);
+      if (!(await getDoc(hotelRef)).exists() || !userDoc.exists())
+        return { status: 201, desc: 'Hotel or user does not exist' };
+      const RatingCreate = {
+        comment: rating.comment,
+        start: rating.start,
+        created_at: Timestamp.now(),
+        user: userRef,
+      };
+      await updateDoc(hotelRef, {
+        ratings: arrayUnion(RatingCreate),
+      });
+      return {
+        status: 200,
+        data: {
+          ...RatingCreate,
+          user: (({ email, phone }) => ({ email, phone }))(userDoc.data()),
+        },
+      };
     } catch (error) {
       return { status: 500, error };
     }

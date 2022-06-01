@@ -71,4 +71,8 @@ export class HotelsController {
     const JSdata = JSON.parse(Hotel.data);
     return this.hotelService.EditRoom({ ...JSdata, imgs: [] }, files);
   }
+  @Post('addrating')
+  async AddRating(@Body() body: any): Promise<any> {
+    return this.hotelService.CreateRating(body);
+  }
 }
