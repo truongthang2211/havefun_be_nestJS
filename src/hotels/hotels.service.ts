@@ -3,7 +3,6 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import db from 'src/db/db';
 import {
   doc,
-  setDoc,
   Timestamp,
   addDoc,
   collection,

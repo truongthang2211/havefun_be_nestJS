@@ -44,7 +44,15 @@ export class PromotionsController {
   @Put('edit')
   @UseInterceptors(FileInterceptor('img'))
   EditPromotion(@Body() body, @UploadedFile() file: Express.Multer.File) {
-    const JSdata = JSON.parse(body.data);
+    const JSdata: IPromotion = JSON.parse(body.data);
+    JSdata.time_start = new Timestamp(
+      JSdata.time_start.seconds,
+      JSdata.time_start.nanoseconds,
+    );
+    JSdata.time_end = new Timestamp(
+      JSdata.time_end.seconds,
+      JSdata.time_end.nanoseconds,
+    );
     return this.promotionService.EditPromotion(JSdata, file);
   }
   @Delete('delete')

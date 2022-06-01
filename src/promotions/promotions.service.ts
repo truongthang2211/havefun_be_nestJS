@@ -117,7 +117,7 @@ export class PromotionsService {
         promotion.img = downloadURL;
       }
 
-      await setDoc(ProRef, promotion);
+      await updateDoc(ProRef, { ...promotion });
       return { status: 200, data: promotion };
     } catch (error) {
       console.log(error);
