@@ -43,7 +43,11 @@ export class HotelsController {
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
     const JSdata = JSON.parse(body.data);
-    return this.hotelService.AddRoom(JSdata.room, JSdata.hotel_id, files);
+    return this.hotelService.AddRoom(
+      { ...JSdata.room, imgs: [] },
+      JSdata.hotel_id,
+      files,
+    );
   }
   @Delete('deleteroom')
   async DeleteRoom(@Body() body) {
@@ -65,6 +69,6 @@ export class HotelsController {
     @UploadedFiles() files: Array<Express.Multer.File>,
   ) {
     const JSdata = JSON.parse(Hotel.data);
-    return this.hotelService.EditRoom(JSdata.room, JSdata.hotel_id, files);
+    return this.hotelService.EditRoom({ ...JSdata, imgs: [] }, files);
   }
 }

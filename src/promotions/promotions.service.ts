@@ -110,7 +110,7 @@ export class PromotionsService {
         };
         const storageRef = ref(
           storage,
-          `images/rooms/${Timestamp.now().toMillis()}`,
+          `images/promotions/${Timestamp.now().toMillis()}`,
         );
         const snapshot = await uploadBytes(storageRef, img.buffer, metadata);
         const downloadURL = await getDownloadURL(snapshot.ref);
