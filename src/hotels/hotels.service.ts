@@ -135,6 +135,8 @@ export class HotelsService {
         created_at: Timestamp.now(),
         rooms: [],
         imgs: [],
+        promotions: [],
+        rating: [],
       };
       const storage = getStorage();
       const metadata = {

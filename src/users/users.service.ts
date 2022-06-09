@@ -25,17 +25,20 @@ export class UsersService {
         const rs = await bcrypt.compareSync(user.password, userFound.password);
         if (rs) {
           delete userFound.password;
-          data = userFound;
+          data = { ...userFound, id: users.docs[0].id };
           desc = 'Successful';
         } else {
           status = 201;
           desc = 'Invalid password';
         }
+      } else {
+        status = 201;
+        desc = 'email or password not valid';
       }
       return { status, data, desc };
     } catch (error) {
       console.log(error);
-      return { status: 200, error };
+      return { status: 500, error };
     }
   }
   async UserSignUp(user) {
@@ -47,12 +50,12 @@ export class UsersService {
       if (userFound) {
         return { status: 201, data: 'Email existed' };
       } else {
-        bcrypt.hash(user.password, 10, function (err, hash) {
-          // Store hash in DB.
-          user.password = hash;
-          user.created_at = Timestamp.now();
-          addDoc(userRef, user);
-        });
+        const hash = bcrypt.hashSync(user.password, 10);
+        user.password = hash;
+        user.created_at = Timestamp.now();
+        const userRef2 = addDoc(userRef, user);
+        delete user.password;
+        user.id = (await userRef2).id;
       }
       return { status: 200, data: user };
     } catch (error) {
