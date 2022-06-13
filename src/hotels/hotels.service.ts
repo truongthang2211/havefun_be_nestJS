@@ -61,7 +61,8 @@ export class HotelsService {
           return { ...originData, id: doc.id };
         }),
       );
-      return { status: 200, data: listHotel };
+      const filteredHotels = listHotel.filter((e) => e.rooms.length > 0);
+      return { status: 200, data: filteredHotels };
     } catch (error) {
       console.log(error);
       return { status: 500, error };
