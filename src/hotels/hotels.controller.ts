@@ -49,9 +49,12 @@ export class HotelsController {
       files,
     );
   }
-  @Delete('deleteroom')
-  async DeleteRoom(@Body() body) {
-    return this.hotelService.DeleteRoom(body.room_id, body.hotel_id);
+  @Delete('deleteroom/:hotel_id/:room_id')
+  async DeleteRoom(
+    @Param('hotel_id') hotel_id: string,
+    @Param('room_id') room_id: string,
+  ) {
+    return this.hotelService.DeleteRoom(room_id, hotel_id);
   }
   @Put('edit')
   @UseInterceptors(FilesInterceptor('imgs'))

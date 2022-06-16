@@ -212,18 +212,22 @@ export class HotelsService {
       const RoomRef = doc(db, 'rooms', room.id);
       if (!(await getDoc(RoomRef)).exists())
         return { status: 201, desc: 'room not found' };
-      for (let i = 0; i < imgs.length; ++i) {
-        const storageRef = ref(
-          storage,
-          `images/rooms/${Timestamp.now().toMillis()}`,
-        );
-        const snapshot = await uploadBytes(
-          storageRef,
-          imgs[i].buffer,
-          metadata,
-        );
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        room.imgs.push(downloadURL);
+      if (imgs && imgs.length > 0) {
+        for (let i = 0; i < imgs.length; ++i) {
+          const storageRef = ref(
+            storage,
+            `images/rooms/${Timestamp.now().toMillis()}`,
+          );
+          const snapshot = await uploadBytes(
+            storageRef,
+            imgs[i].buffer,
+            metadata,
+          );
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          room.imgs.push(downloadURL);
+        }
+      } else {
+        delete room.imgs;
       }
 
       await updateDoc(RoomRef, { ...room });

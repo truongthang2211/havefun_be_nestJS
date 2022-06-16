@@ -50,6 +50,7 @@ export class PromotionsService {
   async GetPromotionByHotel(HotelID: string) {
     try {
       const hotels = await getDoc(doc(db, 'hotels', HotelID));
+      if (!hotels.exists()) return { status: 201, desc: 'Hotel not exist' };
       let promotionList = Array<Promotion>();
       if (hotels.data().promotions) {
         await Promise.all(
@@ -103,6 +104,7 @@ export class PromotionsService {
       const ProRef = doc(db, 'promotions', promotion.id);
       if (!(await getDoc(ProRef)).exists())
         return { status: 201, desc: 'Hotel not found' };
+      delete promotion.hotel_id;
       if (img) {
         const storage = getStorage();
         const metadata = {
@@ -115,6 +117,8 @@ export class PromotionsService {
         const snapshot = await uploadBytes(storageRef, img.buffer, metadata);
         const downloadURL = await getDownloadURL(snapshot.ref);
         promotion.img = downloadURL;
+      } else {
+        delete promotion.img;
       }
 
       await updateDoc(ProRef, { ...promotion });
@@ -139,6 +143,7 @@ export class PromotionsService {
       await deleteDoc(ProRef);
       return { status: 200, desc: 'Successful' };
     } catch (error) {
+      console.log(error);
       return { status: 500, error };
     }
   }

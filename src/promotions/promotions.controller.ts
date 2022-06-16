@@ -55,11 +55,11 @@ export class PromotionsController {
     );
     return this.promotionService.EditPromotion(JSdata, file);
   }
-  @Delete('delete')
-  Deleteromotion(@Body() body) {
-    return this.promotionService.DeletePromotion(
-      body.hotel_id,
-      body.promotion_id,
-    );
+  @Delete('delete/:hotel_id/:promotion_id')
+  Deleteromotion(
+    @Param('hotel_id') hotel_id: string,
+    @Param('promotion_id') promotion_id: string,
+  ) {
+    return this.promotionService.DeletePromotion(hotel_id, promotion_id);
   }
 }
