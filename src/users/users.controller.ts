@@ -12,4 +12,13 @@ export class UsersController {
   UserSignUp(@Body() user) {
     return this.UserService.UserSignUp(user);
   }
+
+  @Post('hostsignin')
+  HostUserSignIn(@Body() user) {
+    return this.UserService.HostUserSignIn(user);
+  }
+  @Post('hostsignup')
+  HostUserSignUp(@Body() user) {
+    return this.UserService.HostUserSignUp(user);
+  }
 }

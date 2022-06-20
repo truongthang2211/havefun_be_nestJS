@@ -33,7 +33,11 @@ export class HotelsController {
     @UploadedFiles() files: Array<Express.Multer.File>,
   ): Promise<any> {
     const JSdata = JSON.parse(Hotel.data);
-    return this.hotelService.CreateHotel(JSdata, files);
+    return this.hotelService.CreateHotel(
+      JSdata.hotel,
+      JSdata.hostuserId,
+      files,
+    );
   }
 
   @Post('addroom')

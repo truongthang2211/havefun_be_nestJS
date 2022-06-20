@@ -62,4 +62,58 @@ export class UsersService {
       return { status: 200, error };
     }
   }
+
+  async HostUserSignIn(hostUser) {
+    let status = 200,
+      data = null,
+      desc = 'Invalid email';
+    try {
+      const userRef = collection(db, 'hostusers');
+      const q = query(userRef, where('email', '==', hostUser.email));
+      const users = await getDocs(q);
+      const userFound = users.docs.length != 0 ? users.docs[0].data() : null;
+      if (userFound) {
+        const rs = await bcrypt.compareSync(
+          hostUser.password,
+          userFound.password,
+        );
+        if (rs) {
+          delete userFound.password;
+          data = { ...userFound, id: users.docs[0].id };
+          desc = 'Successful';
+        } else {
+          status = 201;
+          desc = 'Invalid password';
+        }
+      } else {
+        status = 201;
+        desc = 'email or password not valid';
+      }
+      return { status, data, desc };
+    } catch (error) {
+      console.log(error);
+      return { status: 500, error };
+    }
+  }
+  async HostUserSignUp(hostUser) {
+    try {
+      const userRef = collection(db, 'hostusers');
+      const q = query(userRef, where('email', '==', hostUser.email));
+      const users = await getDocs(q);
+      const userFound = users.docs.length != 0 ? users.docs[0].data() : null;
+      if (userFound) {
+        return { status: 201, data: 'Email existed' };
+      } else {
+        const hash = bcrypt.hashSync(hostUser.password, 10);
+        hostUser.password = hash;
+        hostUser.created_at = Timestamp.now();
+        const userRef2 = addDoc(userRef, hostUser);
+        delete hostUser.password;
+        hostUser.id = (await userRef2).id;
+      }
+      return { status: 200, data: hostUser };
+    } catch (error) {
+      return { status: 200, error };
+    }
+  }
 }

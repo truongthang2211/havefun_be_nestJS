@@ -109,19 +109,24 @@ export class HotelsService {
       const metadata = {
         contentType: 'image/jpeg',
       };
-      for (let i = 0; i < imgs.length; ++i) {
-        const storageRef = ref(
-          storage,
-          `images/hotels/${Timestamp.now().toMillis()}`,
-        );
-        const snapshot = await uploadBytes(
-          storageRef,
-          imgs[i].buffer,
-          metadata,
-        );
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        HotelEdit.imgs.push(downloadURL);
+      if (imgs && imgs.length > 0) {
+        for (let i = 0; i < imgs.length; ++i) {
+          const storageRef = ref(
+            storage,
+            `images/hotels/${Timestamp.now().toMillis()}`,
+          );
+          const snapshot = await uploadBytes(
+            storageRef,
+            imgs[i].buffer,
+            metadata,
+          );
+          const downloadURL = await getDownloadURL(snapshot.ref);
+          HotelEdit.imgs.push(downloadURL);
+        }
+      } else {
+        delete HotelEdit.imgs;
       }
+
       updateDoc(hotelRef, HotelEdit);
       return { status: 200, data: HotelEdit };
     } catch (error) {
@@ -129,7 +134,11 @@ export class HotelsService {
       return { status: 500, error };
     }
   }
-  async CreateHotel(motel: IHotel, imgs: Array<Express.Multer.File>) {
+  async CreateHotel(
+    motel: IHotel,
+    hostUserID: string,
+    imgs: Array<Express.Multer.File>,
+  ) {
     try {
       const HotelCreate = {
         ...motel,
@@ -158,8 +167,16 @@ export class HotelsService {
       }
 
       const docRef = await addDoc(collection(db, 'hotels'), HotelCreate);
+      const HostUserRef = doc(db, 'hostusers', hostUserID);
+      if (!(await getDoc(HostUserRef)).exists()) {
+        return { status: 201, desc: 'Host user not found' };
+      }
+      await updateDoc(HostUserRef, {
+        hotel_id: docRef.id,
+      });
       return { status: 200, data: { ...HotelCreate, id: docRef.id } };
     } catch (error) {
+      console.log(error);
       return { status: 500, error };
     }
   }
